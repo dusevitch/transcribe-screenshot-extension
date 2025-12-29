@@ -33,7 +33,7 @@ A Chrome extension that captures screenshots with area selection and transcribes
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable **Developer mode** (toggle in top-right corner)
 4. Click **Load unpacked**
-5. Select the `transcribe-images-extension` folder
+5. Select the `transcribe-screenshot-extension` folder
 6. The extension should now appear in your extensions list
 
 ### Step 3: Configure Extension
@@ -120,6 +120,8 @@ The extension preserves formatting from your screenshots:
 - Images are sent to Google's Gemini API for transcription
 - No data is stored on external servers
 - You can clear all data anytime via the "Reset to Defaults" button in settings
+
+**For full details, see our [Privacy Policy](PRIVACY.md)**
 
 ## API Costs
 
@@ -212,6 +214,6 @@ This extension is provided as-is for personal use.
 ## Support
 
 For issues, questions, or feature requests:
-- Open an issue on [GitHub](https://github.com/dusevitch/transcribe-images-extension/issues)
+- Open an issue on [GitHub](https://github.com/dusevitch/transcribe-screenshot-extension/issues)
 - Check the README for troubleshooting tips
 - Review your API keys and settings configuration

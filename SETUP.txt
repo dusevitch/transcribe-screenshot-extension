@@ -1,5 +1,5 @@
-QUICK SETUP GUIDE - Transcribe Images Extension
-================================================
+QUICK SETUP GUIDE - Transcribe Screenshot Extension
+====================================================
 
 Super simple 3-step setup! No OAuth or complex configuration needed.
 
@@ -9,11 +9,11 @@ Super simple 3-step setup! No OAuth or complex configuration needed.
    - Copy it (you'll enter this in the extension settings)
 
 2. LOAD EXTENSION
-   - Download or clone: https://github.com/dusevitch/transcribe-images-extension
+   - Download or clone: https://github.com/dusevitch/transcribe-screenshot-extension
    - Open Chrome and go to: chrome://extensions/
    - Turn ON "Developer mode" (top right toggle)
    - Click "Load unpacked"
-   - Select the "transcribe-images-extension" folder
+   - Select the "transcribe-screenshot-extension" folder
 
 3. CONFIGURE EXTENSION
    - Click the extension icon in Chrome toolbar
@@ -46,7 +46,7 @@ UPDATING
 ========
 
 To get latest features:
-1. cd transcribe-images-extension
+1. cd transcribe-screenshot-extension
 2. git pull origin main
 3. Go to chrome://extensions/
 4. Click refresh icon on the extension
