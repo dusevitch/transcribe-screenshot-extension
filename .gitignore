@@ -18,6 +18,10 @@ desktop.ini
 # Logs
 *.log
 
+# Internal documentation (not for public GitHub)
+STORE_LISTING.md
+UPLOAD_GUIDE.md
+
 # User-specific settings (if you want to keep your personal config private)
 # Uncomment the line below if you don't want to share your configured manifest
 # manifest.json
