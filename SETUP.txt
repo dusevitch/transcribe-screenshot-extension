@@ -1,0 +1,52 @@
+QUICK SETUP GUIDE - Transcribe Images Extension
+================================================
+
+Follow these steps to get the extension working:
+
+1. GET GOOGLE OAUTH CREDENTIALS (for Google Drive feature)
+   - Go to: https://console.cloud.google.com/
+   - Create a new project (any name)
+   - Enable "Google Drive API" (APIs & Services > Library)
+   - Configure OAuth consent screen (APIs & Services > OAuth consent screen)
+     * Select "External" user type
+     * Fill in app name
+     * Add yourself as test user
+   - Create credentials (APIs & Services > Credentials > Create Credentials > OAuth Client ID)
+     * Select "Chrome Extension" as type
+     * Copy the Client ID (format: xxxxx.apps.googleusercontent.com)
+   - Open manifest.json in a text editor
+   - Replace "YOUR_CLIENT_ID.apps.googleusercontent.com" with your actual Client ID
+   - Save the file
+
+2. GET GEMINI API KEY
+   - Go to: https://makersuite.google.com/app/apikey
+   - Create API Key
+   - Copy it (you'll enter this in the extension settings)
+
+3. LOAD EXTENSION
+   - Open Chrome
+   - Go to chrome://extensions/
+   - Turn ON "Developer mode" (top right)
+   - Click "Load unpacked"
+   - Select the "transcribe-images-extension" folder
+
+4. CONFIGURE EXTENSION
+   - Click the extension icon in Chrome
+   - Click "Settings"
+   - Paste your Gemini API Key
+   - Click "Connect Google Drive" (if you want to save to Drive)
+   - Click "Save Settings"
+
+5. START USING
+   - Click extension icon
+   - Click "Capture Screenshot"
+   - Select area on screen
+   - Click "Transcribe with Gemini"
+   - Save to Drive or download
+
+THAT'S IT! You're ready to go.
+
+For detailed instructions, see README.md
+
+NOTE: Each user needs their own OAuth credentials because Google requires
+Chrome extensions to have their OAuth Client ID in the manifest.json file.

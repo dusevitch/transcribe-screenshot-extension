@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 500px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .section {
+      margin-bottom: 25px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .section h2 {
+      font-size: 16px;
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: #555;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+      color: #666;
+      font-weight: 500;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+    }
+    .checkbox-group input {
+      width: auto;
+      margin-right: 8px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .primary {
+      background-color: #4285f4;
+      color: white;
+    }
+    .primary:hover {
+      background-color: #357ae8;
+    }
+    .secondary {
+      background-color: #f1f3f4;
+      color: #333;
+    }
+    .secondary:hover {
+      background-color: #e8eaed;
+    }
+    .status {
+      padding: 10px;
+      margin: 15px 0;
+      border-radius: 4px;
+      font-size: 13px;
+      display: none;
+    }
+    .status.success {
+      background: #e6f4ea;
+      color: #137333;
+      display: block;
+    }
+    .help-text {
+      font-size: 12px;
+      color: #999;
+      margin-top: 5px;
+    }
+    .link {
+      color: #4285f4;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Extension Settings</h1>
+
+  <div class="status" id="status"></div>
+
+  <div class="section">
+    <h2>Gemini API</h2>
+    <label for="geminiApiKey">API Key *</label>
+    <input type="password" id="geminiApiKey" placeholder="Enter your Gemini API key">
+    <p class="help-text">
+      Get your API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" class="link">Google AI Studio</a>
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>Google Drive</h2>
+    <button id="connectDrive" class="secondary">Connect Google Drive</button>
+    <p class="help-text" id="driveStatus">Not connected</p>
+    
+    <label for="defaultFolderId">Default Folder ID (optional)</label>
+    <input type="text" id="defaultFolderId" placeholder="Leave empty for root folder">
+    <p class="help-text">
+      Right-click folder in Drive → Share → Copy ID from URL
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>Default Settings</h2>
+    <label for="defaultTitle">Default Document Title</label>
+    <input type="text" id="defaultTitle" placeholder="Transcription" value="Transcription">
+    
+    <div class="checkbox-group">
+      <input type="checkbox" id="autoClear">
+      <label for="autoClear" style="margin: 0;">Auto-clear images after saving</label>
+    </div>
+  </div>
+
+  <button id="saveSettings" class="primary">Save Settings</button>
+  <button id="resetSettings" class="secondary">Reset to Defaults</button>
+
+  <script src="settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 350px;
+      padding: 15px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+    }
+    h2 {
+      margin: 0 0 15px 0;
+      font-size: 18px;
+      color: #333;
+    }
+    .button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .primary {
+      background-color: #4285f4;
+      color: white;
+    }
+    .primary:hover {
+      background-color: #357ae8;
+    }
+    .primary:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .secondary {
+      background-color: #f1f3f4;
+      color: #333;
+    }
+    .secondary:hover {
+      background-color: #e8eaed;
+    }
+    .success {
+      background-color: #34a853;
+      color: white;
+    }
+    .success:hover {
+      background-color: #2d9348;
+    }
+    .images-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin: 10px 0;
+      padding: 5px;
+    }
+    .image-item {
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      margin: 3px 0;
+      background: #f8f9fa;
+      border-radius: 3px;
+    }
+    .image-item img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      margin-right: 10px;
+      border-radius: 3px;
+    }
+    .image-item .remove {
+      margin-left: auto;
+      cursor: pointer;
+      color: #d93025;
+      font-size: 18px;
+      padding: 0 5px;
+    }
+    .section {
+      margin: 15px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+      color: #666;
+    }
+    .status {
+      padding: 8px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-size: 13px;
+      text-align: center;
+    }
+    .status.success {
+      background: #e6f4ea;
+      color: #137333;
+    }
+    .status.error {
+      background: #fce8e6;
+      color: #c5221f;
+    }
+    .status.info {
+      background: #e8f0fe;
+      color: #1967d2;
+    }
+    .settings-link {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    .settings-link a {
+      color: #4285f4;
+      text-decoration: none;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+    }
+    .checkbox-group input {
+      width: auto;
+      margin-right: 8px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>Gemini OCR to Drive</h2>
+  
+  <div id="status" class="status hidden"></div>
+
+  <button id="captureBtn" class="button primary">📸 Capture Screenshot</button>
+  
+  <div id="imagesSection" class="section hidden">
+    <label>Captured Images (<span id="imageCount">0</span>)</label>
+    <div id="imagesList" class="images-list"></div>
+    <button id="clearImages" class="button secondary">Clear All</button>
+  </div>
+
+  <div id="transcribeSection" class="section hidden">
+    <button id="transcribeBtn" class="button success">✨ Transcribe with Gemini</button>
+  </div>
+
+  <div id="saveSection" class="section hidden">
+    <label for="fileTitle">Document Title</label>
+    <input type="text" id="fileTitle" placeholder="My Transcription">
+    
+    <div class="checkbox-group">
+      <input type="checkbox" id="saveToDrive">
+      <label for="saveToDrive" style="margin: 0;">Save to Google Drive</label>
+    </div>
+
+    <button id="saveBtn" class="button success">💾 Save</button>
+  </div>
+
+  <div class="settings-link">
+    <a href="#" id="settingsLink">⚙️ Settings</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

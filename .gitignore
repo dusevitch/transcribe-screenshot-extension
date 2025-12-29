@@ -1,0 +1,23 @@
+# Chrome Extension
+*.crx
+*.pem
+*.zip
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# User-specific settings (if you want to keep your personal config private)
+# Uncomment the line below if you don't want to share your configured manifest
+# manifest.json
