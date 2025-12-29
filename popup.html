@@ -72,12 +72,26 @@
       margin-right: 10px;
       border-radius: 3px;
     }
-    .image-item .remove {
+    .image-item .copy-single {
       margin-left: auto;
+      cursor: pointer;
+      color: #1a73e8;
+      font-size: 16px;
+      padding: 0 5px;
+      transition: opacity 0.2s;
+    }
+    .image-item .copy-single:hover {
+      opacity: 0.7;
+    }
+    .image-item .remove {
       cursor: pointer;
       color: #d93025;
       font-size: 18px;
       padding: 0 5px;
+      transition: opacity 0.2s;
+    }
+    .image-item .remove:hover {
+      opacity: 0.7;
     }
     .section {
       margin: 15px 0;
@@ -244,7 +258,7 @@
   </style>
 </head>
 <body>
-  <h2>Transcribe Images Extension</h2>
+  <h2>Transcribe Screenshot Extension</h2>
 
   <div id="status" class="status hidden"></div>
 
@@ -306,11 +320,8 @@
     <a href="https://github.com/dusevitch/transcribe-images-extension#readme" target="_blank">📖 Setup Guide</a>
   </div>
 
-  <!-- External Libraries for Document Generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- External Libraries -->
+  <script src="libs/jszip.min.js"></script>
 
   <script src="popup.js"></script>
 </body>

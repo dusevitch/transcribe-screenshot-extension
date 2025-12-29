@@ -1,4 +1,4 @@
-# Transcribe Images Extension
+# Transcribe Screenshot Extension
 
 A Chrome extension that captures screenshots with area selection and transcribes text using Google's Gemini AI. Download transcriptions in multiple formats with preserved formatting.
 
@@ -8,11 +8,14 @@ A Chrome extension that captures screenshots with area selection and transcribes
 - 🖼️ **Image Thumbnails** - Preview all captured screenshots before transcription
 - 🔄 **Multiple Screenshots** - Capture and queue multiple images
 - 📥 **Download/Copy Screenshots** - Download all images as ZIP or copy to clipboard for use in other tools/LLMs
-- ✨ **AI Transcription** - Uses Gemini 1.5 Flash for accurate OCR with formatting preservation
+  - 📋 **Individual Copy** - Copy any single screenshot with one click
+  - 📋 **Copy All** - Copy all screenshots at once to paste into Google Docs/Word
+- ✨ **AI Transcription** - Uses Gemini 2.5 Flash for accurate OCR with formatting preservation
 - ⚙️ **Customizable Prompts** - Edit the AI prompt before transcription for custom output formats
 - 📝 **Rich Text Output** - Preserves bold, italics, bullet points, tables, and colors
 - 📋 **One-Click Copy** - Copy formatted text directly to clipboard (paste into Word, Google Docs, etc.)
 - 💾 **Multiple Download Formats** - Save as Word (.docx), HTML, PDF, or plain text
+  - 📄 **True DOCX Format** - Proper Office Open XML format with perfect table rendering
 - ⚙️ **Customizable** - Set default titles and auto-clear options
 
 ## Installation
@@ -52,8 +55,9 @@ A Chrome extension that captures screenshots with area selection and transcribes
    - Each screenshot is numbered and can be removed individually
 
 2. **Export Screenshots (Optional)**
+   - **Copy Individual Image**: Click the 📋 icon next to any screenshot to copy just that one
    - **Download All**: Downloads all screenshots as a ZIP file (or individual PNGs if just one)
-   - **Copy Images**: Copies images to clipboard (first image if multiple) or as HTML for pasting into documents
+   - **Copy All Images**: Copies all images to clipboard as HTML - paste into Google Docs/Word to get all images at once!
    - Great for sharing screenshots or using them in other LLMs/tools!
 
 3. **Transcribe**
@@ -75,17 +79,18 @@ A Chrome extension that captures screenshots with area selection and transcribes
 
 | Format | Best For | Formatting |
 |--------|----------|-----------|
-| **Word (.docx)** | Editing in Microsoft Word or Google Docs | Full formatting preserved |
-| **HTML (.html)** | Web viewing or importing to other tools | Full formatting preserved |
-| **PDF (.pdf)** | Sharing, printing, or archiving | Full formatting, non-editable |
-| **Text (.txt)** | Simple text editors, code, or scripts | No formatting (plain text) |
+| **Word (.docx)** | Editing in Microsoft Word or Google Docs | ✅ Full formatting with perfect table structure |
+| **HTML (.html)** | Web viewing or importing to other tools | ✅ Full formatting preserved |
+| **PDF (.pdf)** | Sharing, printing, or archiving | ✅ Full formatting, non-editable |
+| **Text (.txt)** | Simple text editors, code, or scripts | ❌ No formatting (plain text) |
 
 ### Tips
 
 - **Multiple Screenshots**: The extension preserves the exact order you capture images
+- **Individual Copy**: Click the 📋 icon next to any screenshot to copy just that image
+- **Copy All at Once**: Use "Copy Images" button to copy all screenshots as HTML - paste into Google Docs/Word and all images appear together!
 - **Remove Screenshots**: Click the "×" next to any screenshot thumbnail to remove it
 - **Download Screenshots**: Use "Download All" to get a ZIP of all screenshots (great for backup or sharing)
-- **Copy Images**: Use "Copy Images" to copy to clipboard - paste into other LLMs like ChatGPT, Claude, or documents
 - **Custom Prompts**: Modify the AI prompt for different outputs:
   - "Extract only the main points as bullet points"
   - "Translate the text to [language]"
@@ -163,9 +168,16 @@ When changes are pushed to GitHub:
 
 ## Version
 
-Current version: 1.3.0
+Current version: 1.4.0
 
 ## Changelog
+
+### v1.4.0
+- 📄 **Upgraded to True DOCX Format** - Replaced RTF with proper Office Open XML format for perfect table rendering
+- 📋 **Individual Copy Buttons** - Click 📋 icon next to any screenshot to copy just that image
+- 📋 **Copy All Images** - Copy all screenshots at once as HTML to paste into Google Docs/Word
+- 🔄 **Updated to Gemini 2.5 Flash** - Using the latest AI model for better transcription
+- ✨ **Better Table Support** - Tables now render perfectly in Word with proper structure, borders, and formatting
 
 ### v1.3.0
 - ⚙️ Added customizable prompt editor - modify AI instructions before transcription

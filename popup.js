@@ -40,16 +40,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('downloadBtn').addEventListener('click', downloadDocument);
   document.getElementById('settingsLink').addEventListener('click', openSettings);
 
-  // Load default title from settings
+  // Load default title from settings and always append timestamp
   const { defaultTitle, customPrompt } = await chrome.storage.sync.get(['defaultTitle', 'customPrompt']);
-  if (defaultTitle) {
-    document.getElementById('fileTitle').value = defaultTitle;
-  } else {
-    // Set default title with timestamp
-    const now = new Date();
-    const timestamp = now.toISOString().slice(0, 19).replace('T', '-').replace(/:/g, '');
-    document.getElementById('fileTitle').value = `Transcription-${timestamp}`;
-  }
+  const baseTitle = defaultTitle || 'Transcription';
+  const now = new Date();
+  const timestamp = now.toISOString().slice(0, 19).replace('T', '-').replace(/:/g, '');
+  document.getElementById('fileTitle').value = `${baseTitle}-${timestamp}`;
 
   // Load custom prompt or use default
   const promptText = customPrompt || DEFAULT_PROMPT;
@@ -57,10 +53,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadImagesFromStorage() {
-  const { images } = await chrome.storage.local.get(['images']);
+  const { images, lastTranscription, lastTranscriptionTitle } = await chrome.storage.local.get(['images', 'lastTranscription', 'lastTranscriptionTitle']);
+
   if (images && images.length > 0) {
     capturedImages = images;
     updateImagesList();
+  }
+
+  // Restore last transcription if it exists
+  if (lastTranscription) {
+    transcribedHTML = lastTranscription;
+    document.getElementById('transcriptionOutput').innerHTML = lastTranscription;
+    document.getElementById('resultSection').classList.remove('hidden');
+
+    // Restore the title if it was saved
+    if (lastTranscriptionTitle) {
+      document.getElementById('fileTitle').value = lastTranscriptionTitle;
+    }
   }
 }
 
@@ -103,11 +112,16 @@ function updateImagesList() {
       item.innerHTML = `
         <img src="${img.data}" alt="Screenshot ${index + 1}">
         <span>Screenshot ${index + 1}</span>
-        <span class="remove" data-index="${index}">×</span>
+        <span class="copy-single" data-index="${index}" title="Copy this image">📋</span>
+        <span class="remove" data-index="${index}" title="Remove this image">×</span>
       `;
 
       item.querySelector('.remove').addEventListener('click', (e) => {
         removeImage(parseInt(e.target.dataset.index));
+      });
+
+      item.querySelector('.copy-single').addEventListener('click', (e) => {
+        copySingleImage(parseInt(e.target.dataset.index));
       });
 
       imagesList.appendChild(item);
@@ -124,13 +138,22 @@ function removeImage(index) {
   updateImagesList();
 }
 
-function clearImages() {
+async function clearImages() {
   capturedImages = [];
-  saveImagesToStorage();
+  transcribedHTML = '';
+
+  // Clear from storage
+  await chrome.storage.local.set({
+    images: [],
+    lastTranscription: null,
+    lastTranscriptionTitle: null
+  });
+
   updateImagesList();
   document.getElementById('resultSection').classList.add('hidden');
-  transcribedHTML = '';
-  showStatus('All images cleared', 'info');
+  document.getElementById('transcriptionOutput').innerHTML = '';
+
+  showStatus('All images and transcription cleared', 'info');
 }
 
 async function downloadAllImages() {
@@ -198,6 +221,28 @@ async function downloadImagesAsZip() {
   URL.revokeObjectURL(url);
 }
 
+async function copySingleImage(index) {
+  if (index < 0 || index >= capturedImages.length) {
+    showStatus('Invalid image index', 'error');
+    return;
+  }
+
+  showStatus('Copying image...', 'info');
+
+  try {
+    const response = await fetch(capturedImages[index].data);
+    const blob = await response.blob();
+
+    await navigator.clipboard.write([
+      new ClipboardItem({ 'image/png': blob })
+    ]);
+
+    showStatus(`Screenshot ${index + 1} copied to clipboard!`, 'success');
+  } catch (error) {
+    showStatus('Copy failed: ' + error.message, 'error');
+  }
+}
+
 async function copyAllImages() {
   if (capturedImages.length === 0) {
     showStatus('No images to copy', 'error');
@@ -207,48 +252,42 @@ async function copyAllImages() {
   showStatus('Copying images to clipboard...', 'info');
 
   try {
-    // Convert data URLs to blobs
-    const imageBlobs = await Promise.all(
-      capturedImages.map(async (img) => {
-        const response = await fetch(img.data);
-        return await response.blob();
+    // For multiple images, copy as HTML with embedded base64 images
+    // This works well in Google Docs, Word, and other rich text editors
+    const htmlContent = capturedImages.map((img, index) =>
+      `<img src="${img.data}" alt="Screenshot ${index + 1}" style="max-width: 100%; margin: 10px 0;" />`
+    ).join('<br/>');
+
+    const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+    const textBlob = new Blob([`${capturedImages.length} screenshot(s)`], { type: 'text/plain' });
+
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': htmlBlob,
+        'text/plain': textBlob
       })
-    );
+    ]);
 
-    // Create ClipboardItem with all images
-    const clipboardItems = imageBlobs.map(blob => {
-      return new ClipboardItem({ 'image/png': blob });
-    });
+    if (capturedImages.length === 1) {
+      showStatus('Image copied to clipboard!', 'success');
+    } else {
+      showStatus(`${capturedImages.length} images copied! Paste into Google Docs/Word.`, 'success');
+    }
+  } catch (error) {
+    // Fallback: Try copying just the first image as PNG
+    try {
+      const response = await fetch(capturedImages[0].data);
+      const blob = await response.blob();
 
-    // Copy to clipboard (note: only the first image will be copied due to browser limitations)
-    // For multiple images, we'll copy the first one and provide feedback
-    if (clipboardItems.length > 0) {
-      await navigator.clipboard.write([clipboardItems[0]]);
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob })
+      ]);
 
       if (capturedImages.length === 1) {
         showStatus('Image copied to clipboard!', 'success');
       } else {
-        showStatus(`First image copied! (Browser limits clipboard to 1 image. Use Download All for ${capturedImages.length} images)`, 'info');
+        showStatus(`First image copied! (${capturedImages.length} total. Use Download All for all images)`, 'info');
       }
-    }
-  } catch (error) {
-    // Fallback: Copy as HTML with embedded images
-    try {
-      const htmlContent = capturedImages.map((img, index) =>
-        `<img src="${img.data}" alt="Screenshot ${index + 1}" />`
-      ).join('\n');
-
-      const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
-      const textBlob = new Blob([`${capturedImages.length} screenshot(s) captured`], { type: 'text/plain' });
-
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          'text/html': htmlBlob,
-          'text/plain': textBlob
-        })
-      ]);
-
-      showStatus('Images copied as HTML! Paste into Word/Docs.', 'success');
     } catch (err) {
       showStatus('Copy failed. Try Download All instead.', 'error');
     }
@@ -319,7 +358,7 @@ async function transcribeImages() {
     }));
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -362,6 +401,14 @@ async function transcribeImages() {
       // Display in the output div
       document.getElementById('transcriptionOutput').innerHTML = transcribedHTML;
       document.getElementById('resultSection').classList.remove('hidden');
+
+      // Save transcription to storage for persistence
+      const currentTitle = document.getElementById('fileTitle').value;
+      await chrome.storage.local.set({
+        lastTranscription: transcribedHTML,
+        lastTranscriptionTitle: currentTitle
+      });
+
       showStatus('Transcription complete!', 'success');
     } else {
       // More detailed error message
@@ -486,80 +533,408 @@ function downloadPlainText(title, content) {
 }
 
 async function downloadDOCX(title, outputDiv) {
-  try {
-    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, AlignmentType } = docx;
+  // Generate a proper .docx file using Office Open XML format
+  const htmlContent = outputDiv.innerHTML;
 
-    // Convert HTML to docx elements
-    const children = htmlToDocxElements(outputDiv);
+  // Convert HTML to Word XML
+  const wordXML = htmlToWordXML(htmlContent);
 
-    const doc = new Document({
-      sections: [{
-        properties: {},
-        children: children
-      }]
-    });
-
-    const blob = await Packer.toBlob(doc);
-    downloadBlob(title + '.docx', blob);
-  } catch (error) {
-    throw new Error('DOCX generation failed. Library may not be loaded.');
-  }
+  // Create the DOCX file structure (DOCX is a ZIP file with XML files)
+  await createDOCXFile(title, wordXML);
 }
 
-function htmlToDocxElements(element) {
-  const { Paragraph, TextRun } = docx;
-  const elements = [];
+function htmlToWordXML(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  let xml = '';
 
-  // Simple conversion - can be enhanced
-  const text = element.innerText;
-  const lines = text.split('\n');
+  function escapeXML(text) {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
 
-  lines.forEach(line => {
-    if (line.trim()) {
-      elements.push(new Paragraph({
-        children: [new TextRun(line)]
-      }));
+  function createTextRun(text, props = {}) {
+    let propsXML = '';
+    if (props.bold) propsXML += '<w:b/>';
+    if (props.italic) propsXML += '<w:i/>';
+    if (props.underline) propsXML += '<w:u w:val="single"/>';
+    if (props.color) propsXML += `<w:color w:val="${props.color}"/>`;
+
+    return `<w:r>${propsXML ? `<w:rPr>${propsXML}</w:rPr>` : ''}<w:t xml:space="preserve">${escapeXML(text)}</w:t></w:r>`;
+  }
+
+  function processNode(node, inheritedProps = {}) {
+    let result = '';
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent;
+      if (text.trim()) {
+        result += createTextRun(text, inheritedProps);
+      }
+      return result;
     }
-  });
 
-  return elements.length > 0 ? elements : [new Paragraph({ children: [new TextRun('')] })];
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const tagName = node.tagName.toLowerCase();
+      const newProps = { ...inheritedProps };
+
+      switch (tagName) {
+        case 'p':
+          result += '<w:p>';
+          result += '<w:pPr></w:pPr>';
+          result += processChildren(node, newProps);
+          result += '</w:p>';
+          break;
+
+        case 'br':
+          result += '<w:r><w:br/></w:r>';
+          break;
+
+        case 'strong':
+        case 'b':
+          newProps.bold = true;
+          result += processChildren(node, newProps);
+          break;
+
+        case 'em':
+        case 'i':
+          newProps.italic = true;
+          result += processChildren(node, newProps);
+          break;
+
+        case 'u':
+          newProps.underline = true;
+          result += processChildren(node, newProps);
+          break;
+
+        case 'h1':
+        case 'h2':
+        case 'h3':
+          newProps.bold = true;
+          result += '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr>';
+          result += processChildren(node, newProps);
+          result += '</w:p>';
+          break;
+
+        case 'ul':
+        case 'ol':
+          result += processChildren(node, newProps);
+          break;
+
+        case 'li':
+          result += '<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr>';
+          result += processChildren(node, newProps);
+          result += '</w:p>';
+          break;
+
+        case 'table':
+          result += convertTableToWordXML(node);
+          break;
+
+        case 'tr':
+        case 'th':
+        case 'td':
+          // These are handled by convertTableToWordXML
+          break;
+
+        case 'hr':
+          result += '<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="auto"/></w:pBdr></w:pPr></w:p>';
+          break;
+
+        case 'span':
+          // Check for color style
+          const style = node.getAttribute('style');
+          if (style && style.includes('color')) {
+            const colorMatch = style.match(/color:\s*#([0-9a-fA-F]{6})/);
+            if (colorMatch) {
+              newProps.color = colorMatch[1];
+            }
+          }
+          result += processChildren(node, newProps);
+          break;
+
+        default:
+          result += processChildren(node, newProps);
+      }
+    }
+
+    return result;
+  }
+
+  function processChildren(node, props = {}) {
+    let result = '';
+    for (let child of node.childNodes) {
+      result += processNode(child, props);
+    }
+    return result;
+  }
+
+  function convertTableToWordXML(table) {
+    let tableXML = '<w:tbl>';
+
+    // Table properties
+    tableXML += '<w:tblPr>';
+    tableXML += '<w:tblStyle w:val="TableGrid"/>';
+    tableXML += '<w:tblW w:w="5000" w:type="pct"/>';
+    tableXML += '<w:tblBorders>';
+    tableXML += '<w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>';
+    tableXML += '<w:left w:val="single" w:sz="4" w:space="0" w:color="auto"/>';
+    tableXML += '<w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>';
+    tableXML += '<w:right w:val="single" w:sz="4" w:space="0" w:color="auto"/>';
+    tableXML += '<w:insideH w:val="single" w:sz="4" w:space="0" w:color="auto"/>';
+    tableXML += '<w:insideV w:val="single" w:sz="4" w:space="0" w:color="auto"/>';
+    tableXML += '</w:tblBorders>';
+    tableXML += '</w:tblPr>';
+
+    // Table grid (column definitions)
+    const firstRow = table.querySelector('tr');
+    if (firstRow) {
+      const cellCount = firstRow.querySelectorAll('th, td').length;
+      tableXML += '<w:tblGrid>';
+      for (let i = 0; i < cellCount; i++) {
+        tableXML += '<w:gridCol w:w="2000"/>';
+      }
+      tableXML += '</w:tblGrid>';
+    }
+
+    // Process rows
+    const rows = table.querySelectorAll('tr');
+    rows.forEach((row) => {
+      tableXML += '<w:tr>';
+
+      const cells = row.querySelectorAll('th, td');
+      const isHeader = row.querySelector('th') !== null;
+
+      cells.forEach(cell => {
+        tableXML += '<w:tc>';
+        tableXML += '<w:tcPr>';
+        tableXML += '<w:tcW w:w="2000" w:type="dxa"/>';
+        if (isHeader) {
+          tableXML += '<w:shd w:val="clear" w:color="auto" w:fill="F8F9FA"/>';
+        }
+        tableXML += '</w:tcPr>';
+
+        // Cell content
+        tableXML += '<w:p>';
+        tableXML += '<w:pPr>';
+        if (isHeader) {
+          tableXML += '<w:jc w:val="center"/>';
+        }
+        tableXML += '</w:pPr>';
+
+        const cellProps = isHeader ? { bold: true } : {};
+        for (let child of cell.childNodes) {
+          tableXML += processNode(child, cellProps);
+        }
+
+        tableXML += '</w:p>';
+        tableXML += '</w:tc>';
+      });
+
+      tableXML += '</w:tr>';
+    });
+
+    tableXML += '</w:tbl>';
+    return tableXML;
+  }
+
+  // Process the entire document body
+  xml = processNode(doc.body);
+
+  // If no paragraphs were created, wrap in a paragraph
+  if (!xml.includes('<w:p>')) {
+    xml = `<w:p><w:pPr></w:pPr>${xml}</w:p>`;
+  }
+
+  return xml;
+}
+
+async function createDOCXFile(title, bodyXML) {
+  // Check if JSZip is available
+  if (typeof JSZip === 'undefined') {
+    throw new Error('JSZip library not loaded. Cannot create DOCX file.');
+  }
+
+  const zip = new JSZip();
+
+  // [Content_Types].xml
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+  <Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/>
+</Types>`;
+  zip.file('[Content_Types].xml', contentTypes);
+
+  // _rels/.rels
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+  zip.folder('_rels').file('.rels', rels);
+
+  // word/_rels/document.xml.rels
+  const docRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/>
+</Relationships>`;
+  zip.folder('word').folder('_rels').file('document.xml.rels', docRels);
+
+  // word/document.xml
+  const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    ${bodyXML}
+  </w:body>
+</w:document>`;
+  zip.folder('word').file('document.xml', document);
+
+  // word/styles.xml
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:docDefaults>
+    <w:rPrDefault>
+      <w:rPr>
+        <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+        <w:sz w:val="22"/>
+      </w:rPr>
+    </w:rPrDefault>
+  </w:docDefaults>
+  <w:style w:type="paragraph" w:styleId="Normal">
+    <w:name w:val="Normal"/>
+    <w:qFormat/>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="Heading1">
+    <w:name w:val="Heading 1"/>
+    <w:basedOn w:val="Normal"/>
+    <w:pPr>
+      <w:spacing w:before="240" w:after="120"/>
+    </w:pPr>
+    <w:rPr>
+      <w:b/>
+      <w:sz w:val="32"/>
+    </w:rPr>
+  </w:style>
+  <w:style w:type="table" w:styleId="TableGrid">
+    <w:name w:val="Table Grid"/>
+    <w:basedOn w:val="TableNormal"/>
+    <w:tblPr>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+      </w:tblBorders>
+    </w:tblPr>
+  </w:style>
+</w:styles>`;
+  zip.folder('word').file('styles.xml', styles);
+
+  // word/numbering.xml (for bullet points)
+  const numbering = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:abstractNum w:abstractNumId="0">
+    <w:multiLevelType w:val="hybridMultilevel"/>
+    <w:lvl w:ilvl="0">
+      <w:start w:val="1"/>
+      <w:numFmt w:val="bullet"/>
+      <w:lvlText w:val="•"/>
+      <w:lvlJc w:val="left"/>
+      <w:pPr>
+        <w:ind w:left="720" w:hanging="360"/>
+      </w:pPr>
+    </w:lvl>
+  </w:abstractNum>
+  <w:num w:numId="1">
+    <w:abstractNumId w:val="0"/>
+  </w:num>
+</w:numbering>`;
+  zip.folder('word').file('numbering.xml', numbering);
+
+  // Generate the DOCX file
+  const blob = await zip.generateAsync({ type: 'blob' });
+  downloadBlob(title + '.docx', blob);
 }
 
 async function downloadPDF(title, outputDiv) {
-  try {
-    const { jsPDF } = window.jspdf;
-    const canvas = await html2canvas(outputDiv, {
-      scale: 2,
-      backgroundColor: '#ffffff'
-    });
+  // Create a printable HTML page
+  const htmlContent = outputDiv.innerHTML;
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
-
-    const imgWidth = 210; // A4 width in mm
-    const pageHeight = 297; // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+  const fullHTML = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <style>
+    @media print {
+      @page { margin: 2cm; }
     }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 10px 0;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 12px 0;
+    }
+    p { margin: 8px 0; }
+    ul, ol { margin: 8px 0; padding-left: 24px; }
+  </style>
+  <script>
+    // Auto-trigger print dialog when page loads
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+      }, 100);
+    };
+  </script>
+</head>
+<body>
+<h1>${title}</h1>
+${htmlContent}
+<p style="margin-top: 40px; font-size: 12px; color: #666;">To save as PDF: Use Ctrl+P (or Cmd+P on Mac), then select "Save as PDF" as the destination.</p>
+</body>
+</html>`;
 
-    pdf.save(title + '.pdf');
-  } catch (error) {
-    throw new Error('PDF generation failed. Library may not be loaded.');
-  }
+  // Create blob and download as HTML file that can be opened and printed
+  const blob = new Blob([fullHTML], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+
+  // Open in new tab without affecting the popup
+  chrome.tabs.create({ url: url, active: false });
+
+  showStatus('Print preview opened in new tab - use Ctrl+P to save as PDF', 'success');
+
+  // Clean up the blob URL after a delay
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 function downloadFile(filename, content, mimeType) {
