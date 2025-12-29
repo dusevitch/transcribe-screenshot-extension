@@ -1,6 +1,19 @@
 let capturedImages = [];
 let transcribedHTML = '';
 
+const DEFAULT_PROMPT = `Transcribe all text from these images in the exact order they appear. Your output should be formatted in HTML with proper semantic tags. Use the following guidelines:
+
+1. Use <strong> for bold text, <em> for italics
+2. Use <ul> and <li> for bullet points, <ol> and <li> for numbered lists
+3. Use <table>, <tr>, <th>, and <td> for tables with proper borders
+4. Use <hr> for horizontal lines/dividers
+5. Use <p> tags to separate paragraphs
+6. Preserve colors using inline styles like <span style="color: #FF0000">text</span> when visible
+7. Maintain the original formatting, structure, and hierarchy
+8. If there are multiple images, transcribe them in sequence
+
+Provide ONLY the HTML content without wrapping it in <html>, <body>, or \`\`\`html tags. Start directly with the content.`;
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Load saved images from storage
   const { images } = await chrome.storage.local.get(['images']);
@@ -15,15 +28,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('downloadImages').addEventListener('click', downloadAllImages);
   document.getElementById('copyImages').addEventListener('click', copyAllImages);
   document.getElementById('transcribeBtn').addEventListener('click', transcribeImages);
+  document.getElementById('togglePrompt').addEventListener('click', togglePromptEditor);
+  document.getElementById('savePrompt').addEventListener('click', saveCustomPrompt);
+  document.getElementById('resetPrompt').addEventListener('click', resetPromptToDefault);
   document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
   document.getElementById('downloadBtn').addEventListener('click', downloadDocument);
   document.getElementById('settingsLink').addEventListener('click', openSettings);
 
   // Load default title from settings
-  const { defaultTitle } = await chrome.storage.sync.get(['defaultTitle']);
+  const { defaultTitle, customPrompt } = await chrome.storage.sync.get(['defaultTitle', 'customPrompt']);
   if (defaultTitle) {
     document.getElementById('fileTitle').value = defaultTitle;
   }
+
+  // Load custom prompt or use default
+  const promptText = customPrompt || DEFAULT_PROMPT;
+  document.getElementById('customPrompt').value = promptText;
 });
 
 async function captureScreenshot() {
@@ -236,6 +256,37 @@ async function saveImagesToStorage() {
   await chrome.storage.local.set({ images: capturedImages });
 }
 
+function togglePromptEditor() {
+  const promptEditor = document.getElementById('promptEditor');
+  const toggleBtn = document.getElementById('togglePrompt');
+
+  if (promptEditor.classList.contains('hidden')) {
+    promptEditor.classList.remove('hidden');
+    toggleBtn.textContent = '▲ Hide Prompt';
+  } else {
+    promptEditor.classList.add('hidden');
+    toggleBtn.textContent = '▼ Customize Prompt (Optional)';
+  }
+}
+
+async function saveCustomPrompt() {
+  const promptText = document.getElementById('customPrompt').value.trim();
+
+  if (!promptText) {
+    showStatus('Prompt cannot be empty', 'error');
+    return;
+  }
+
+  await chrome.storage.sync.set({ customPrompt: promptText });
+  showStatus('Custom prompt saved as default!', 'success');
+}
+
+async function resetPromptToDefault() {
+  document.getElementById('customPrompt').value = DEFAULT_PROMPT;
+  await chrome.storage.sync.remove('customPrompt');
+  showStatus('Prompt reset to default', 'success');
+}
+
 async function transcribeImages() {
   if (capturedImages.length === 0) {
     showStatus('No images to transcribe', 'error');
@@ -253,6 +304,9 @@ async function transcribeImages() {
   document.getElementById('transcribeBtn').disabled = true;
 
   try {
+    // Get the current prompt (custom or default)
+    const promptText = document.getElementById('customPrompt').value.trim() || DEFAULT_PROMPT;
+
     // Prepare images for Gemini
     const imageParts = capturedImages.map(img => ({
       inlineData: {
@@ -272,7 +326,7 @@ async function transcribeImages() {
           contents: [{
             parts: [
               {
-                text: "Transcribe all text from these images in the exact order they appear. Your output should be formatted in HTML with proper semantic tags. Use the following guidelines:\n\n1. Use <strong> for bold text, <em> for italics\n2. Use <ul> and <li> for bullet points, <ol> and <li> for numbered lists\n3. Use <table>, <tr>, <th>, and <td> for tables with proper borders\n4. Use <hr> for horizontal lines/dividers\n5. Use <p> tags to separate paragraphs\n6. Preserve colors using inline styles like <span style=\"color: #FF0000\">text</span> when visible\n7. Maintain the original formatting, structure, and hierarchy\n8. If there are multiple images, transcribe them in sequence\n\nProvide ONLY the HTML content without wrapping it in <html>, <body>, or ```html tags. Start directly with the content."
+                text: promptText
               },
               ...imageParts
             ]

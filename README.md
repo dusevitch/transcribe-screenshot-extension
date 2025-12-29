@@ -9,6 +9,7 @@ A Chrome extension that captures screenshots with area selection and transcribes
 - 🔄 **Multiple Screenshots** - Capture and queue multiple images
 - 📥 **Download/Copy Screenshots** - Download all images as ZIP or copy to clipboard for use in other tools/LLMs
 - ✨ **AI Transcription** - Uses Gemini 1.5 Flash for accurate OCR with formatting preservation
+- ⚙️ **Customizable Prompts** - Edit the AI prompt before transcription for custom output formats
 - 📝 **Rich Text Output** - Preserves bold, italics, bullet points, tables, and colors
 - 📋 **One-Click Copy** - Copy formatted text directly to clipboard (paste into Word, Google Docs, etc.)
 - 💾 **Multiple Download Formats** - Save as Word (.docx), HTML, PDF, or plain text
@@ -57,6 +58,10 @@ A Chrome extension that captures screenshots with area selection and transcribes
 
 3. **Transcribe**
    - After capturing all needed screenshots
+   - (Optional) Click "▼ Customize Prompt" to edit the AI prompt for custom output
+     - Edit the prompt to change output format (e.g., "Just extract bullet points" or "Translate to Spanish")
+     - Click "Save as Default" to save your custom prompt for future use
+     - Click "Reset to Default" to restore the original prompt
    - Click "✨ Transcribe with Gemini"
    - Wait for AI processing (usually a few seconds)
    - The transcribed text appears in a formatted preview box
@@ -81,6 +86,11 @@ A Chrome extension that captures screenshots with area selection and transcribes
 - **Remove Screenshots**: Click the "×" next to any screenshot thumbnail to remove it
 - **Download Screenshots**: Use "Download All" to get a ZIP of all screenshots (great for backup or sharing)
 - **Copy Images**: Use "Copy Images" to copy to clipboard - paste into other LLMs like ChatGPT, Claude, or documents
+- **Custom Prompts**: Modify the AI prompt for different outputs:
+  - "Extract only the main points as bullet points"
+  - "Translate the text to [language]"
+  - "Summarize this content"
+  - "Format as a table" or "Convert to JSON"
 - **Clear All**: Use "Clear All" to start over
 - **Edit Transcription**: The output box is editable - click to make changes before copying/downloading
 - **Auto-Clear**: Enable in settings to automatically clear images after downloading
@@ -153,9 +163,15 @@ When changes are pushed to GitHub:
 
 ## Version
 
-Current version: 1.2.0
+Current version: 1.3.0
 
 ## Changelog
+
+### v1.3.0
+- ⚙️ Added customizable prompt editor - modify AI instructions before transcription
+- 💾 Save custom prompts as defaults for repeated use
+- 🔄 Easily switch between custom and default prompts
+- 🎯 Enable use cases: translation, summarization, custom formatting, etc.
 
 ### v1.2.0
 - 📥 Added "Download All" button to export screenshots as ZIP file
