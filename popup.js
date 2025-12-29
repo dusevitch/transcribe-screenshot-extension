@@ -340,6 +340,19 @@ async function transcribeImages() {
 
     const data = await response.json();
 
+    // Log full response for debugging
+    console.log('Gemini API Response:', data);
+
+    // Check for API errors
+    if (data.error) {
+      throw new Error(`API Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+
+    // Check if response was blocked
+    if (data.candidates && data.candidates[0]?.finishReason === 'SAFETY') {
+      throw new Error('Content blocked by safety filters. Try different images.');
+    }
+
     if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
       transcribedHTML = data.candidates[0].content.parts[0].text;
 
@@ -351,10 +364,13 @@ async function transcribeImages() {
       document.getElementById('resultSection').classList.remove('hidden');
       showStatus('Transcription complete!', 'success');
     } else {
-      throw new Error('No transcription returned');
+      // More detailed error message
+      console.error('Unexpected API response structure:', data);
+      throw new Error(`No transcription returned. API response: ${JSON.stringify(data).substring(0, 200)}`);
     }
 
   } catch (error) {
+    console.error('Transcription error:', error);
     showStatus('Transcription failed: ' + error.message, 'error');
   } finally {
     document.getElementById('transcribeBtn').disabled = false;
