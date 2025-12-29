@@ -34,34 +34,37 @@ async function captureSelectedArea(tabId, rect) {
   }
 }
 
-function cropImage(dataUrl, rect) {
+async function cropImage(dataUrl, rect) {
+  // Convert data URL to blob
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+
+  // Create ImageBitmap from blob (works in service workers)
+  const imageBitmap = await createImageBitmap(blob);
+
+  // Create OffscreenCanvas for cropping
+  const canvas = new OffscreenCanvas(rect.width, rect.height);
+  const ctx = canvas.getContext('2d');
+
+  // Draw the cropped region
+  ctx.drawImage(
+    imageBitmap,
+    rect.x,
+    rect.y,
+    rect.width,
+    rect.height,
+    0,
+    0,
+    rect.width,
+    rect.height
+  );
+
+  // Convert to blob then to data URL
+  const croppedBlob = await canvas.convertToBlob({ type: 'image/png' });
+  const reader = new FileReader();
+
   return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = new OffscreenCanvas(rect.width, rect.height);
-      const ctx = canvas.getContext('2d');
-      
-      // Account for device pixel ratio
-      const dpr = window.devicePixelRatio || 1;
-      
-      ctx.drawImage(
-        img,
-        rect.x * dpr,
-        rect.y * dpr,
-        rect.width * dpr,
-        rect.height * dpr,
-        0,
-        0,
-        rect.width,
-        rect.height
-      );
-      
-      canvas.convertToBlob({ type: 'image/png' }).then(blob => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
-    };
-    img.src = dataUrl;
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(croppedBlob);
   });
 }
