@@ -112,6 +112,7 @@ function updateImagesList() {
       item.innerHTML = `
         <img src="${img.data}" alt="Screenshot ${index + 1}">
         <span>Screenshot ${index + 1}</span>
+        <span class="download-single" data-index="${index}" title="Download this image">💾</span>
         <span class="copy-single" data-index="${index}" title="Copy this image">📋</span>
         <span class="remove" data-index="${index}" title="Remove this image">×</span>
       `;
@@ -122,6 +123,10 @@ function updateImagesList() {
 
       item.querySelector('.copy-single').addEventListener('click', (e) => {
         copySingleImage(parseInt(e.target.dataset.index));
+      });
+
+      item.querySelector('.download-single').addEventListener('click', (e) => {
+        downloadSingleImage(parseInt(e.target.dataset.index));
       });
 
       imagesList.appendChild(item);
@@ -219,6 +224,26 @@ async function downloadImagesAsZip() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function downloadSingleImage(index) {
+  if (index < 0 || index >= capturedImages.length) {
+    showStatus('Invalid image index', 'error');
+    return;
+  }
+
+  const now = new Date();
+  const timestamp = now.toISOString().slice(0, 19).replace('T', '-').replace(/:/g, '');
+  const filename = `screenshot-${index + 1}-${timestamp}.png`;
+
+  const a = document.createElement('a');
+  a.href = capturedImages[index].data;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  showStatus(`Screenshot ${index + 1} downloaded!`, 'success');
 }
 
 async function copySingleImage(index) {

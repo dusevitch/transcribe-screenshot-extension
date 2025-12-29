@@ -8,6 +8,7 @@ A Chrome extension that captures screenshots with area selection and transcribes
 - 🖼️ **Image Thumbnails** - Preview all captured screenshots before transcription
 - 🔄 **Multiple Screenshots** - Capture and queue multiple images
 - 📥 **Download/Copy Screenshots** - Download all images as ZIP or copy to clipboard for use in other tools/LLMs
+  - 💾 **Individual Download** - Download any single screenshot with one click
   - 📋 **Individual Copy** - Copy any single screenshot with one click
   - 📋 **Copy All** - Copy all screenshots at once to paste into Google Docs/Word
 - ✨ **AI Transcription** - Uses Gemini 2.5 Flash for accurate OCR with formatting preservation
@@ -55,6 +56,7 @@ A Chrome extension that captures screenshots with area selection and transcribes
    - Each screenshot is numbered and can be removed individually
 
 2. **Export Screenshots (Optional)**
+   - **Download Individual Image**: Click the 💾 icon next to any screenshot to download just that one
    - **Copy Individual Image**: Click the 📋 icon next to any screenshot to copy just that one
    - **Download All**: Downloads all screenshots as a ZIP file (or individual PNGs if just one)
    - **Copy All Images**: Copies all images to clipboard as HTML - paste into Google Docs/Word to get all images at once!
@@ -87,10 +89,11 @@ A Chrome extension that captures screenshots with area selection and transcribes
 ### Tips
 
 - **Multiple Screenshots**: The extension preserves the exact order you capture images
+- **Individual Download**: Click the 💾 icon next to any screenshot to download just that image with timestamp
 - **Individual Copy**: Click the 📋 icon next to any screenshot to copy just that image
 - **Copy All at Once**: Use "Copy Images" button to copy all screenshots as HTML - paste into Google Docs/Word and all images appear together!
 - **Remove Screenshots**: Click the "×" next to any screenshot thumbnail to remove it
-- **Download Screenshots**: Use "Download All" to get a ZIP of all screenshots (great for backup or sharing)
+- **Download All**: Use "Download All" to get a ZIP of all screenshots (great for backup or sharing)
 - **Custom Prompts**: Modify the AI prompt for different outputs:
   - "Extract only the main points as bullet points"
   - "Translate the text to [language]"
@@ -174,6 +177,7 @@ Current version: 1.4.0
 
 ### v1.4.0
 - 📄 **Upgraded to True DOCX Format** - Replaced RTF with proper Office Open XML format for perfect table rendering
+- 💾 **Individual Download Buttons** - Click 💾 icon next to any screenshot to download just that image with timestamp
 - 📋 **Individual Copy Buttons** - Click 📋 icon next to any screenshot to copy just that image
 - 📋 **Copy All Images** - Copy all screenshots at once as HTML to paste into Google Docs/Word
 - 🔄 **Updated to Gemini 2.5 Flash** - Using the latest AI model for better transcription
